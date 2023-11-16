@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <title>AVOCarbon | Calcul dimensions export en STL</title>
+  <link rel="icon" href="https://raw.githubusercontent.com/Rebiere-S/calculation-dimension-stl-export/main/ico.png" sizes="32x32">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Madurai:wght@300;700&family=Lato&family=Montserrat:wght@600&family=Open+Sans:wght@300&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin="anonymous">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <img src="https://raw.githubusercontent.com/Rebiere-S/calculation-dimension-stl-export/main/logo.png" alt="Logo Avocarbon France" id="logo">
+    <h1>Calcul de dimensions lors de l'export en STL</h1>
+  </header>
+  <section>
+    <form>
+      <h2>Introduction :</h2>
+      <br>
+      <p>Cet outil à pour vocation à aider à la configuration des logiciels de DAO (CAD) pour l'export au format STL, mais aussi à la mise en lumière du fait que les paramètres de base ne conviennent souvent pas pour un usage en génie mécanique et pour des pièces destinées à être imprimées en 3D. Il a aussi vocation à calculer/estimer le dimensionnel final nominal d'une cote, et peut aider à optimiser la taille du fichier exporté.
+    </form>
+  </section>
+  <section>
+    <div id="canvasContainer">
+      <canvas id="drawingCanvas" title="Utilisez la molettes et le pointeur de la souris pour zoomer sur une zone"></canvas><br>
+      <button id="recenterButton" onclick="recenter();">Zoomer/dézoomer et recentrer</button>
+      <button id="menuButton">Options/legendes</button>
+      <div id="modal" class="modal">
+        <div class="modal-content">
+          <span class="close">&times;</span>
+          <h2>Options d'affichage/légendes</h2>
+          <br>
+          <form id="displayOptions">
+            <h3>Montrer/cacher des éléments</h3>
+            <div class="fieldRow">
+              <input type="checkbox" id="initialCircleCheckbox" checked>
+              <label for="initialCircleCheckbox">Diamètre théorique (diamètre initial)</label>
+            </div>
+            <div class="fieldRow">
+              <input type="checkbox" id="exportPolygonCheckbox" checked>
+              <label for="exportPolygonCheckbox">Polygone régulier résultant de l'export</label>
+            </div>
+            <div class="fieldRow">
+              <input type="checkbox" id="resultCircleCheckbox">
+              <label for="resultCircleCheckbox">Diamètre théorique équivalent résultant</label>
+            </div>
+            <br>
+            <h3>Légendes</h3>
+            <div class="fieldRow">
+              <label>Diamètre théorique (diamètre initial) :</label>
+              <label class="legend blue">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+            </div>
+            <div class="fieldRow">
+              <label>Polygone régulier résultant de l'export :</label>
+              <label class="legend green">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+            </div>
+            <div class="fieldRow">
+              <label>Diamètre théorique équivalent résultant :</label>
+              <label class="legend red">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div id="parametersContainer">
+      <form>
+        <fieldset>
+          <h2>Données d'entrées :</h2>
+          <br>
+          <h3>Type :</h3>
+          <div class="fieldRow">
+            <label for="dimensionType">Type de diamètre* :</label>
+            <select id="dimensionType" onChange="updateValues();">
+              <option value="inner" selected>Alésage</option>
+              <option value="outer">Arbre</option>
+            </select>
+          </div>
+          <br>
+          <h3>Dimension :</h3>
+          <div class="fieldRow">
+            <label for="dimensionValue">Diamètre nominal (mm)* :</label>
+            <input type="number" id="dimensionValue" min="1" step="0.05" value="6" onChange="updateValues();">
+          </div>
+        </fieldset>
+      </form>
+      <form>
+        <fieldset>
+          <h2>Paramètres d'exportation :</h2>
+          <p class="gray">Les paramètres récommandés pour l'exportation au format STL depuis Solidworks sont disponibles dans le fichier "<a class="link" href="https://avocarbongroup.sharepoint.com/:b:/r/sites/3DIMPRESSION/Shared%20Documents/General/Ressources/Aide/Param%C3%A9trage%20Solidworks%20pour%20l%E2%80%99export%20en%20STL.pdf?csf=1&web=1&e=emTWmz">Paramétrage Solidworks pour l’export en STL</a>".</p>
+          <br>
+          <h3>Déviation :</h3>
+          <div class="fieldRow">
+            <label for="deviationValue">Tolérance de déviation (mm)* :</label>
+            <input type="number" id="deviationValue" min="0.005" step="0.005" value="2" onChange="updateValues();">
+          </div>
+          <br>
+          <h3>Angle :</h3>
+          <div class="fieldRow">
+            <label for="angleValue">Tolérance d'angle (°) :</label>
+            <input type="number" id="angleValue" min="1" max="120" value="30"  onChange="updateValues();">
+          </div>
+          <br>
+          <p class="gray"><small><i>NOTE : En fonction du logiciel de DAO (CAD) utilisé, le nom des options peut varier, ainsi que leurs comportements.<br>Pour plus d'informations sur les paramètres recommandés pour d'autres logiciels de DAO (CAD), veuillez cliquer <a class="link" href="https://www.stratasys.com/en/stratasysdirect/resources/resource-guides/how-to-prepare-stl-files/">ICI</a>.<br>Pour plus d'informations sur les logiciels permettant d'exporter au format STL, veuillez cliquer <a class="link" href="https://www.sculpteo.com/fr/centre-apprentissage/creer-un-fichier-3d/convertisseurs-stl-les-meilleurs-outils/">ICI</a>.<br><br>Pour plus d'informations sur le format STL, vous pouvez consulter la page Wikipédia en cliquant <a class="link" href="https://en.wikipedia.org/wiki/STL_(file_format)">ICI</a>.</i></small></p>
+        </fieldset>
+      </form>
+    </div>
+  </section>
+  <section>
+    <form>
+      <fieldset>
+        <h2>Résultats :</h2>
+        <p class="red">NOTE : Les résultats sont à titres indicatifs uniquement. Ils peuvent varier en fonction du logiciel de DAO utilisé.</p>
+        <br>
+        <h3>Diamètre :</h3>
+        <div class="fieldRow">
+          <label>Diamètre équivalent résultant (mm) :</label>
+          <output id="equivalentDiameter">-</output>
+        </div>
+        <br>
+        <h3>Facettes :</h3>
+        <div class="fieldRow">
+          <label>Nombre de facettes :</label>
+          <output id="sidesNumber">-</output>
+        </div>
+        <div class="fieldRow">
+          <label>Largeur d'une facette (mm) :</label>
+          <output id="sidesLenght">-</output>
+        </div>
+        <br>
+        <h3>Triangles :</h3>
+        <div class="fieldRow">
+          <label>Nombre de triangles :</label>
+          <output id="trianglesNumber">-</output>
+        </div>
+      </fieldset>
+    </form>
+  </section>
+  <div id="signatureContainer">
+    <p id="signature"><small>Conçu par Simon Rebière</small></p>
+  </div>
+  <script>
+    const canvas = document.getElementById("drawingCanvas"),
+      ctx = canvas.getContext("2d");
+
+var scale = 1,
+    scaleMultiplier = 0.1,
+    
+    originX = 0,
+    originY = 0;
+
+var dimensionType,
+    dimensionValue;
+
+var deviationValue,
+    angleValue;
+
+var equivalentDiameter,
+    
+    sidesNumber,
+    sidesLenght,
+    
+    trianglesNumber;
+
+
+function updateValues() {
+  dimensionType = document.getElementById("dimensionType").value,
+  dimensionValue = document.getElementById("dimensionValue").value;
+  
+  deviationValue = document.getElementById("deviationValue").value,
+  angleValue = document.getElementById("angleValue").value;
+  
+  sidesNumberDeviationValue = Math.ceil(Math.PI / Math.asin(deviationValue / dimensionValue));
+  
+  sidesNumberAngleValue = (360 / angleValue).toFixed(0),
+  sideLenghtAngleValue = (2 * (dimensionValue / 2)) * Math.sin(Math.PI / sidesNumberAngleValue);
+  
+  
+  updateResults();
+}
+
+
+function updateResults() {
+  if (dimensionType === "inner") {
+    if (deviationValue <= sideLenghtAngleValue) {
+      sidesNumber = sidesNumberDeviationValue;
+    } else {
+      sidesNumber = sidesNumberAngleValue;
+    }
+    
+    sidesLenght = (2 * (dimensionValue / 2)) * Math.sin(Math.PI / sidesNumber);
+    equivalentDiameter = 2 * (sidesLenght / (2 * Math.tan(Math.PI / sidesNumber)));
+    
+  } else if (dimensionType === "outer") {
+    if (deviationValue <= sideLenghtAngleValue) {
+      sidesNumber = sidesNumberDeviationValue;
+    } else {
+      sidesNumber = sidesNumberAngleValue;
+    }
+    
+    sidesLenght = (2 * (dimensionValue / 2)) * Math.sin(Math.PI / sidesNumber);
+    equivalentDiameter = dimensionValue;
+  }
+  
+  trianglesNumber = sidesNumber * 2;
+  
+  
+  document.getElementById("equivalentDiameter").value = equivalentDiameter.toFixed(3),
+  
+  document.getElementById("sidesNumber").value = sidesNumber,
+  document.getElementById("sidesLenght").value = sidesLenght.toFixed(3),
+  
+  document.getElementById("trianglesNumber").value = trianglesNumber;
+  
+  console.log();
+  
+  
+  drawCircleAndPolygon();
+}
+
+
+function setCanvasSize() {
+  var width = window.innerWidth;
+  var height = window.innerHeight;
+  
+  if (width > height) {
+    canvas.width = height * 0.6;
+    canvas.height = height * 0.6;
+  } else {
+    canvas.width = width * 0.6;
+    canvas.height = width * 0.6;
+  }
+  
+  drawCircleAndPolygon();
+}
+
+
+// Gestion de l'affichage du menu modal
+var modal = document.getElementById("modal");
+var btn = document.getElementById("menuButton");
+var span = document.getElementsByClassName("close")[0];
+
+btn.onclick = function() {
+  modal.style.display = "block";
+}
+
+span.onclick = function() {
+  modal.style.display = "none";
+}
+
+window.onclick = function(event) {
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
+
+
+// Gestion de l'affichage du cercle et du polygone régulier
+var initialCircleCheckbox = document.getElementById("initialCircleCheckbox"),
+    exportPolygonCheckbox = document.getElementById("exportPolygonCheckbox"),
+    resultCircleCheckbox = document.getElementById("resultCircleCheckbox");
+
+initialCircleCheckbox.addEventListener("change", drawCircleAndPolygon),
+exportPolygonCheckbox.addEventListener("change", drawCircleAndPolygon),
+resultCircleCheckbox.addEventListener("change", drawCircleAndPolygon);
+
+function drawCircleAndPolygon() {  
+  ctx.save();
+  ctx.setTransform(scale, 0, 0, scale, originX, originY);
+  
+  // Nettoyer le canvas
+  ctx.clearRect(-originX / scale, -originY / scale, canvas.width / scale, canvas.height / scale);
+  
+  var centerX = canvas.width / 2,
+      centerY = canvas.height / 2;
+  var size = Math.min(canvas.width, canvas.height) / 3;
+  
+  // Dessiner le cercle "Diamètre initial"
+  if (initialCircleCheckbox.checked) {
+    var radius = size;
+    
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+    ctx.closePath();
+    ctx.strokeStyle = "blue";
+    ctx.stroke();
+  }
+  
+  // Dessiner le polygone régulier résultant de l'export
+  if (exportPolygonCheckbox.checked) {
+    var radius = size;
+    
+    ctx.beginPath();
+    ctx.moveTo(centerX + radius * Math.cos(0), centerY + radius * Math.sin(0));          
+    
+    for (var i = 1; i <= sidesNumber; i += 1) {
+      ctx.lineTo(centerX + radius * Math.cos(i * 2 * Math.PI / sidesNumber), centerY + radius  * Math.sin(i * 2 * Math.PI / sidesNumber));
+    }
+    
+    ctx.closePath();
+    ctx.strokeStyle = "green";
+    ctx.stroke();
+  }
+  
+  // Dessiner le cercle équivalent résultant
+  if (resultCircleCheckbox.checked) {
+    radius = size * (equivalentDiameter / dimensionValue);
+    
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+    ctx.closePath();
+    ctx.strokeStyle = "red";
+    ctx.stroke();
+  }
+  
+  ctx.restore();
+}
+
+canvas.addEventListener("wheel", function(event) {
+  var mouseX = event.clientX - canvas.getBoundingClientRect().left;
+  var mouseY = event.clientY - canvas.getBoundingClientRect().top;
+  
+  var wheel = event.deltaY < 0 ? 1 : -1;
+  var zoom = Math.exp(wheel * scaleMultiplier);
+  
+  originX = mouseX - mouseX * zoom + originX * zoom;
+  originY = mouseY - mouseY * zoom + originY * zoom;
+  
+  scale *= zoom;
+  
+  drawCircleAndPolygon();
+  event.preventDefault();
+});
+
+function recenter() {
+  scale = 1;
+  originX = 0;
+  originY = 0;
+  
+  drawCircleAndPolygon();
+}
+
+
+updateValues();
+
+
+window.onload = setCanvasSize;
+window.onresize = setCanvasSize;
+  </script>
+</body>
+</html>
