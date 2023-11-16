@@ -205,7 +205,11 @@ function updateResults() {
   trianglesNumber = sidesNumber * 2;
   
   
-  document.getElementById("equivalentDiameter").value = equivalentDiameter.toFixed(3),
+  if (dimensionType === "inner") {
+    document.getElementById("equivalentDiameter").value = equivalentDiameter.toFixed(3);
+  } else if (dimensionType === "outer") {
+    document.getElementById("equivalentDiameter").value = equivalentDiameter;
+  }
   
   document.getElementById("sidesNumber").value = sidesNumber,
   document.getElementById("sidesLenght").value = sidesLenght.toFixed(3),
