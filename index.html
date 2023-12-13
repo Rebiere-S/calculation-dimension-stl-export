@@ -101,7 +101,13 @@
             <input type="number" id="angleValue" min="1" max="120" value="30"  onChange="updateValues();">
           </div>
           <br>
-          <p class="gray"><small><i>NOTE : En fonction du logiciel de DAO (CAD) utilisé, le nom des options peut varier, ainsi que leurs comportements.<br>Pour plus d'informations sur les paramètres recommandés pour d'autres logiciels de DAO (CAD), veuillez cliquer <a class="link" href="https://www.stratasys.com/en/stratasysdirect/resources/resource-guides/how-to-prepare-stl-files/">ICI</a>.<br>Pour plus d'informations sur les logiciels permettant d'exporter au format STL, veuillez cliquer <a class="link" href="https://www.sculpteo.com/fr/centre-apprentissage/creer-un-fichier-3d/convertisseurs-stl-les-meilleurs-outils/">ICI</a>.<br><br>Pour plus d'informations sur le format STL, vous pouvez consulter la page Wikipédia en cliquant <a class="link" href="https://en.wikipedia.org/wiki/STL_(file_format)">ICI</a>.</i></small></p>
+          <p class="gray">
+            <small><i>NOTE : En fonction du logiciel de DAO (CAD) utilisé, le nom des options peut varier, ainsi que leurs comportements.
+            <br>Pour plus d'informations sur les paramètres recommandés pour d'autres logiciels de DAO (CAD), veuillez cliquer <a class="link" href="https://www.stratasys.com/en/stratasysdirect/resources/resource-guides/how-to-prepare-stl-files/">ICI</a>.
+            <br>Pour plus d'informations sur les logiciels permettant d'exporter au format STL, veuillez cliquer <a class="link" href="https://www.sculpteo.com/fr/centre-apprentissage/creer-un-fichier-3d/convertisseurs-stl-les-meilleurs-outils/">ICI</a>.
+            <br>
+            <br>Pour plus d'informations sur le format STL, vous pouvez consulter la page Wikipédia en cliquant <a class="link" href="https://en.wikipedia.org/wiki/STL_(file_format)">ICI</a>.</i></small>
+          </p>
         </fieldset>
       </form>
     </div>
@@ -133,6 +139,23 @@
           <label>Nombre de triangles :</label>
           <output id="trianglesNumber">-</output>
         </div>
+        <br>
+        <h3>Fidélité géométrique (visuelle) :</h3>
+        <p class="gray">
+          <small><i>NOTE : Les données suivantes ne servent qu'à donner une idée de la fidélité visuelle de la géométrie exportée comparée à la géométrie initiale. Elles en n'ont aucunement vocation à traduire quoi que ce soit concernant l'aspect fonctionnel.
+          <br>
+          <br>EXPLICATION : Le polygone régulier (tous les côtés sont de même longueur et tous les angles sont de même valeur) issue de l'export, possède un nombre de côté qui est régit par les paramètres d'exports du logiciel de DAO. Ce polygone régulier est une simplification du cercle initial. L'angle formé par deux côtés adjacents est de X°. Cet angle augmente lorsque l'on augmente le nombre de côtés du polygone régulier. Si on avait une infinité de côté, on observerait que l'angle tend vers 180°, ce qui veut dire que la réprésentation la plus fidèle d'un cercle en utilisant un polygone régulier, est un polygone régulier dont l'angle de deux côtés adjacents est proche de 180°.
+          </i></small>
+        </p>
+        <br>
+        <div class="fieldRow">
+          <label>Angle d'un côté avec un côté adjacent (°) :</label>
+          <output id="polygonAngle">-</output>
+        </div>
+        <div class="fieldRow">
+          <label>Fidélité par rapport à la géométrie initiale (%) :</label>
+          <output id="fidelityPercentage">-</output>
+        </div>
       </fieldset>
     </form>
   </section>
@@ -140,7 +163,7 @@
     <p id="signature"><small>Conçu par Simon Rebière</small></p>
   </div>
   <script>
-    const canvas = document.getElementById("drawingCanvas"),
+const canvas = document.getElementById("drawingCanvas"),
       ctx = canvas.getContext("2d");
 
 var scale = 1,
@@ -160,7 +183,10 @@ var equivalentDiameter,
     sidesNumber,
     sidesLenght,
     
-    trianglesNumber;
+    trianglesNumber,
+    
+    polygonAngle,
+    fidelityPercentage;
 
 
 function updateValues() {
@@ -202,7 +228,10 @@ function updateResults() {
     equivalentDiameter = dimensionValue;
   }
   
-  trianglesNumber = sidesNumber * 2;
+  trianglesNumber = sidesNumber * 2,
+  
+  polygonAngle = ((sidesNumber - 2) * 180) / sidesNumber,
+  fidelityPercentage = (polygonAngle / 180) * 100;
   
   
   if (dimensionType === "inner") {
@@ -214,9 +243,10 @@ function updateResults() {
   document.getElementById("sidesNumber").value = sidesNumber,
   document.getElementById("sidesLenght").value = sidesLenght.toFixed(3),
   
-  document.getElementById("trianglesNumber").value = trianglesNumber;
+  document.getElementById("trianglesNumber").value = trianglesNumber,
   
-  console.log();
+  document.getElementById("polygonAngle").value = polygonAngle.toFixed(1),
+  document.getElementById("fidelityPercentage").value = fidelityPercentage.toFixed(2);
   
   
   drawCircleAndPolygon();
