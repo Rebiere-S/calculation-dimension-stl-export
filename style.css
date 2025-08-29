@@ -72,7 +72,8 @@ input:invalid {
 }
 
 button {
-  height: 35px;
+  min-height: 35px;
+  height: max-content;
   border: 1px solid #ccc;
   background-color: #f2f2f2;
   padding: 10px;
@@ -210,4 +211,5 @@ body {
       color: #8b8b8b;
       text-decoration: none;
       cursor: pointer;
+
     }
